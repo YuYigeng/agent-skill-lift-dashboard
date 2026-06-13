@@ -230,6 +230,12 @@ function pct(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+const RISK_LABELS: Record<ProductEvalCase["risk"], string> = {
+  low: "低风险",
+  medium: "中风险",
+  high: "高风险",
+};
+
 function ms(value: number): string {
   if (value < 1000) return `${Math.round(value)}ms`;
   return `${(value / 1000).toFixed(2)}s`;
@@ -266,7 +272,7 @@ function renderSkillRow(skill: ReportSkill): string {
 
 function renderAssertionsTable(grading: GradingJson): string {
   if (grading.assertion_results.length === 0) {
-    return `<p class="muted">No assertions.</p>`;
+    return `<p class="muted">没有断言。</p>`;
   }
   const rows = grading.assertion_results
     .map(
@@ -279,7 +285,7 @@ function renderAssertionsTable(grading: GradingJson): string {
         </tr>`
     )
     .join("\n");
-  return `<table class="assertions"><thead><tr><th>#</th><th></th><th>Assertion</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="assertions"><thead><tr><th>#</th><th></th><th>断言</th><th>证据</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function renderToolCallsPanel(calls: ToolCall[] | undefined): string {
@@ -299,9 +305,9 @@ function renderToolCallsPanel(calls: ToolCall[] | undefined): string {
     .join("\n");
   return `
     <details class="tools" open>
-      <summary>tool calls (${calls.length})</summary>
+      <summary>工具调用 (${calls.length})</summary>
       <table class="tool-calls">
-        <thead><tr><th>#</th><th>Tool</th><th>Arguments</th></tr></thead>
+        <thead><tr><th>#</th><th>工具</th><th>参数</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </details>
@@ -322,16 +328,16 @@ function renderRun(run: ReportRun): string {
       </header>
       ${
         run.prompts?.system
-          ? `<details class="prompt"><summary>system prompt</summary><pre>${escapeHtml(run.prompts.system)}</pre></details>`
+          ? `<details class="prompt"><summary>系统提示词</summary><pre>${escapeHtml(run.prompts.system)}</pre></details>`
           : ""
       }
-      <details class="prompt" open><summary>user prompt</summary><pre>${escapeHtml(run.prompts?.user ?? "(unknown)")}</pre></details>
-      <details class="output" open><summary>output</summary><pre>${escapeHtml(run.output || "(empty)")}</pre></details>
+      <details class="prompt" open><summary>用户提示词</summary><pre>${escapeHtml(run.prompts?.user ?? "(unknown)")}</pre></details>
+      <details class="output" open><summary>模型输出</summary><pre>${escapeHtml(run.output || "(empty)")}</pre></details>
       ${renderToolCallsPanel(run.toolCalls)}
       ${renderAssertionsTable(run.grading)}
       ${
         run.prompts?.judgePrompt
-          ? `<details class="judge"><summary>judge prompt</summary><pre>${escapeHtml(run.prompts.judgePrompt)}</pre></details>`
+          ? `<details class="judge"><summary>裁判提示词</summary><pre>${escapeHtml(run.prompts.judgePrompt)}</pre></details>`
           : ""
       }
     </section>
@@ -363,7 +369,7 @@ function renderSkillSection(skill: ReportSkill): string {
         const sign = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;
         const ppDelta = d.pass_rate * 100;
         const cls = ppDelta > 0 ? "ok" : ppDelta < 0 ? "bad" : "muted";
-        return `<div class="delta ${cls}">Δ vs baseline: pass-rate ${sign(ppDelta)}pp · time ${sign(d.time_seconds)}s · tokens ${sign(d.tokens)}</div>`;
+        return `<div class="delta ${cls}">相对 baseline：通过率 ${sign(ppDelta)}pp · 时间 ${sign(d.time_seconds)}s · tokens ${sign(d.tokens)}</div>`;
       })()
     : "";
   return `
@@ -371,7 +377,7 @@ function renderSkillSection(skill: ReportSkill): string {
       <header>
         <h2>${escapeHtml(skill.meta.name)} <span class="badge ${rateClass(t.passRate)}">${pct(t.passRate)}</span></h2>
         <div class="muted">${escapeHtml(skill.meta.relPath)}</div>
-        <div class="muted">${t.passed}/${t.total} assertions · ${skill.evals.length} evals · ${ms(t.avgDurationMs)} avg · ${Math.round(t.avgTokens)} tokens avg</div>
+        <div class="muted">${t.passed}/${t.total} 个断言通过 · ${skill.evals.length} 个 eval · 平均 ${ms(t.avgDurationMs)} · 平均 ${Math.round(t.avgTokens)} tokens</div>
         ${benchmarkBlock}
       </header>
       <div class="evals">${skill.evals.map(renderEval).join("\n")}</div>
@@ -606,7 +612,7 @@ function signedNumber(value: number, suffix = ""): string {
 
 function renderProductCaseRows(cases: ProductEvalCase[]): string {
   if (cases.length === 0) {
-    return `<tr><td colspan="7" class="muted">No baseline comparison cases.</td></tr>`;
+    return `<tr><td colspan="7" class="muted">没有 baseline 对比案例。</td></tr>`;
   }
   return cases
     .map((item) => {
@@ -616,10 +622,10 @@ function renderProductCaseRows(cases: ProductEvalCase[]): string {
         <tr>
           <td>${escapeHtml(item.skill)}</td>
           <td>${escapeHtml(item.evalName)}</td>
-          <td><span class="risk risk-${item.risk}">${item.risk}</span></td>
-          <td>${escapeHtml(item.tags.join(", ") || "untagged")}</td>
+          <td><span class="risk risk-${item.risk}">${RISK_LABELS[item.risk]}</span></td>
+          <td>${escapeHtml(item.tags.join(", ") || "未标记")}</td>
           <td class="${deltaClass}">${signedPct(delta)}</td>
-          <td>${item.latencyDeltaMs === undefined ? "n/a" : signedNumber(item.latencyDeltaMs, "ms")}</td>
+          <td>${item.latencyDeltaMs === undefined ? "无" : signedNumber(item.latencyDeltaMs, "ms")}</td>
           <td>${item.failedAssertions.length}</td>
         </tr>`;
     })
@@ -629,7 +635,7 @@ function renderProductCaseRows(cases: ProductEvalCase[]): string {
 function renderProductSummary(summary: ProductSummary): string {
   const t = summary.totals;
   const comparison = summary.workspaceComparison
-    ? `<div class="product-note">Run-over-run pass-rate delta: <strong>${signedPct(summary.workspaceComparison.delta)}</strong> from compared workspace.</div>`
+    ? `<div class="product-note">相对上一次 workspace 的通过率变化：<strong>${signedPct(summary.workspaceComparison.delta)}</strong></div>`
     : "";
   const tagRows = Object.entries(summary.tagGroups)
     .map(
@@ -647,30 +653,30 @@ function renderProductSummary(summary: ProductSummary): string {
 
   return `
     <section class="product-dashboard">
-      <h2>Product Lift Dashboard</h2>
-      <p class="muted">Measures whether each Agent Skill improves task outcomes versus the baseline run.</p>
+      <h2>Agent Skill 提升度看板</h2>
+      <p class="muted">衡量每个 Agent Skill 相比 baseline 是否真正改善任务结果。</p>
       <div class="product-grid">
-        <div class="product-card"><span>Skill pass rate</span><strong>${pct(t.passRate)}</strong></div>
-        <div class="product-card"><span>Avg lift vs baseline</span><strong>${signedPct(t.averagePassRateDelta)}</strong></div>
-        <div class="product-card"><span>Regressions</span><strong>${t.regressionCount}</strong></div>
-        <div class="product-card"><span>Latency delta</span><strong>${signedNumber(t.averageLatencyDeltaMs, "ms")}</strong></div>
-        <div class="product-card"><span>Token delta</span><strong>${signedNumber(t.averageTokenDelta)}</strong></div>
-        <div class="product-card"><span>Failed assertions</span><strong>${t.failedAssertions}</strong></div>
+        <div class="product-card"><span>Skill 通过率</span><strong>${pct(t.passRate)}</strong></div>
+        <div class="product-card"><span>相对 baseline 平均提升</span><strong>${signedPct(t.averagePassRateDelta)}</strong></div>
+        <div class="product-card"><span>回归案例</span><strong>${t.regressionCount}</strong></div>
+        <div class="product-card"><span>延迟变化</span><strong>${signedNumber(t.averageLatencyDeltaMs, "ms")}</strong></div>
+        <div class="product-card"><span>Token 变化</span><strong>${signedNumber(t.averageTokenDelta)}</strong></div>
+        <div class="product-card"><span>失败断言</span><strong>${t.failedAssertions}</strong></div>
       </div>
       ${comparison}
-      <h3>Best Lift Cases</h3>
+      <h3>提升最明显案例</h3>
       <table class="product-table">
-        <thead><tr><th>Skill</th><th>Eval</th><th>Risk</th><th>Tags</th><th>Lift</th><th>Latency</th><th>Failed</th></tr></thead>
+        <thead><tr><th>Skill</th><th>Eval</th><th>风险</th><th>标签</th><th>提升</th><th>延迟</th><th>失败</th></tr></thead>
         <tbody>${renderProductCaseRows(summary.bestCases)}</tbody>
       </table>
-      <h3>Worst Lift Cases</h3>
+      <h3>表现最差案例</h3>
       <table class="product-table">
-        <thead><tr><th>Skill</th><th>Eval</th><th>Risk</th><th>Tags</th><th>Lift</th><th>Latency</th><th>Failed</th></tr></thead>
+        <thead><tr><th>Skill</th><th>Eval</th><th>风险</th><th>标签</th><th>提升</th><th>延迟</th><th>失败</th></tr></thead>
         <tbody>${renderProductCaseRows(summary.worstCases)}</tbody>
       </table>
-      <h3>Tag Groups</h3>
+      <h3>标签分组</h3>
       <table class="product-table">
-        <thead><tr><th>Tag</th><th class="num">Cases</th><th class="num">Pass rate</th><th class="num">Lift</th><th class="num">Regressions</th><th class="num">Failed assertions</th></tr></thead>
+        <thead><tr><th>标签</th><th class="num">案例数</th><th class="num">通过率</th><th class="num">提升</th><th class="num">回归</th><th class="num">失败断言</th></tr></thead>
         <tbody>${tagRows}</tbody>
       </table>
     </section>
@@ -791,7 +797,7 @@ export function generateReport(args: GenerateReportArgs): GenerateReportResult {
   const overallRate = totalAssertions === 0 ? 1 : totalPassed / totalAssertions;
   const generatedAt = new Date().toISOString();
 
-  const title = args.title ?? "Agent Skills Eval report";
+  const title = args.title ?? "Agent Skills 评测报告";
   const outputDir = args.output ?? path.join(args.workspace, "report");
   let summaryPath: string | undefined;
   const productSummary = args.productReport
@@ -812,7 +818,7 @@ export function generateReport(args: GenerateReportArgs): GenerateReportResult {
 
   const body =
     skills.length === 0
-      ? `<div class="empty">No skill artifacts found in <code>${escapeHtml(args.workspace)}</code>.</div>`
+      ? `<div class="empty">在 <code>${escapeHtml(args.workspace)}</code> 中没有找到 Skill 评测产物。</div>`
       : `
         ${productDashboard}
         <table class="summary">
@@ -820,11 +826,11 @@ export function generateReport(args: GenerateReportArgs): GenerateReportResult {
             <tr>
               <th>Skill</th>
               <th class="num">Evals</th>
-              <th class="num">Passed</th>
-              <th class="num">Pass rate</th>
+              <th class="num">通过</th>
+              <th class="num">通过率</th>
               <th></th>
-              <th class="num">Avg time</th>
-              <th class="num">Avg tokens</th>
+              <th class="num">平均耗时</th>
+              <th class="num">平均 tokens</th>
             </tr>
           </thead>
           <tbody>${summaryRows}</tbody>
@@ -833,7 +839,7 @@ export function generateReport(args: GenerateReportArgs): GenerateReportResult {
       `;
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -844,16 +850,16 @@ export function generateReport(args: GenerateReportArgs): GenerateReportResult {
   <header class="hero">
     <h1>${escapeHtml(title)}</h1>
     <div class="meta">
-      generated ${escapeHtml(generatedAt)}
+      生成时间 ${escapeHtml(generatedAt)}
       ${args.target ? `· target <code>${escapeHtml(args.target)}</code>` : ""}
       ${args.judge ? `· judge <code>${escapeHtml(args.judge)}</code>` : ""}
     </div>
     <div class="totals">
-      <div class="stat"><span class="label">skills</span><span class="value">${skills.length}</span></div>
-      <div class="stat"><span class="label">evals</span><span class="value">${totalEvals}</span></div>
-      <div class="stat ok"><span class="label">passed</span><span class="value">${totalPassed}</span></div>
-      <div class="stat ${totalFailed > 0 ? "bad" : ""}"><span class="label">failed</span><span class="value">${totalFailed}</span></div>
-      <div class="stat ${rateClass(overallRate)}"><span class="label">pass rate</span><span class="value">${pct(overallRate)}</span></div>
+      <div class="stat"><span class="label">Skills</span><span class="value">${skills.length}</span></div>
+      <div class="stat"><span class="label">Evals</span><span class="value">${totalEvals}</span></div>
+      <div class="stat ok"><span class="label">通过</span><span class="value">${totalPassed}</span></div>
+      <div class="stat ${totalFailed > 0 ? "bad" : ""}"><span class="label">失败</span><span class="value">${totalFailed}</span></div>
+      <div class="stat ${rateClass(overallRate)}"><span class="label">通过率</span><span class="value">${pct(overallRate)}</span></div>
     </div>
   </header>
   <main>${body}</main>

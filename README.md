@@ -1,37 +1,27 @@
-# Agent Skill Lift Dashboard
+# Agent Skill 提升度看板（Agent Skill Lift Dashboard）
 
-Portfolio derivative based on [darkrishabh/agent-skills-eval](https://github.com/darkrishabh/agent-skills-eval).
-The upstream project evaluates Agent Skills by comparing `with_skill` and
-`without_skill` runs. This derivative adds a product-facing lift dashboard that
-turns those artifacts into evidence for AI product decisions.
+这是基于 [darkrishabh/agent-skills-eval](https://github.com/darkrishabh/agent-skills-eval)
+二次开发的作品项目。上游项目通过对比 `with_skill` 和 `without_skill` 两组运行结果来评估 Agent Skill；我在此基础上增加了面向产品决策的提升度看板，用来判断某个 Skill 是否真的改善了模型行为。
 
-See [ATTRIBUTION.md](ATTRIBUTION.md) for upstream credit and license notes.
+上游来源、许可证和改动范围见 [ATTRIBUTION.md](ATTRIBUTION.md)。
 
-## What I Added
+## 我新增了什么
 
-- `--product-report` CLI flag that adds a product lift dashboard to the static
-  HTML report.
-- `report/summary.json` with pass-rate lift, regression count, latency delta,
-  token delta, failed assertions, best/worst cases, and tag/risk groupings.
-- Optional `--compare-workspace <path>` for run-over-run portfolio or CI review.
-- Eval metadata fields: `tags?: string[]` and `risk?: "low" | "medium" | "high"`.
-- Tests for metadata parsing, artifact persistence, CLI output, and summary
-  generation.
+- 增加 `--product-report` CLI 参数，在静态 HTML 报告中生成产品化提升度看板。
+- 输出 `report/summary.json`，包含通过率提升、回归数量、延迟变化、token 变化、失败断言、最佳/最差案例，以及 tag/risk 分组。
+- 增加可选 `--compare-workspace <path>`，支持跨迭代对比，适合作品展示或 CI 复盘。
+- 为 eval 增加可选元数据：`tags?: string[]` 和 `risk?: "low" | "medium" | "high"`。
+- 增加元数据解析、产物持久化、CLI 输出和 summary 生成相关测试。
 
-## Product Framing
+## 产品定位
 
-**User:** AI product manager or developer-platform PM validating whether a
-domain-specific Agent Skill actually improves model behavior.
+**用户：** 需要验证领域 Agent Skill 是否真正提升模型表现的 AI 产品经理或开发者平台 PM。
 
-**Problem:** Shipping a skill from intuition alone is risky. A product team needs
-baseline lift, regressions, cost/latency deltas, and failure examples before
-deciding whether the skill is worth enabling.
+**问题：** 只凭直觉上线 Skill 风险很高。产品团队需要在启用前看到 baseline 提升、回归案例、成本/延迟变化和失败样例。
 
-**Decision support:** The dashboard makes the question concrete: which skill
-cases improved, which regressed, what risks are high, and what failed assertions
-should be fixed before rollout.
+**决策支持：** 看板把问题具体化：哪些 Skill case 有提升、哪些发生回退、哪些属于高风险场景，以及上线前应该修复哪些失败断言。
 
-## Product Report Usage
+## 产品报告用法
 
 ```bash
 npx agent-skills-eval ./skills \
@@ -48,10 +38,9 @@ npx agent-skills-eval ./skills \
   --compare-workspace ./agent-skills-workspace/iteration-1
 ```
 
-The command writes `report/index.html` and `report/summary.json` inside the run
-workspace.
+命令会在本次运行的 workspace 中写入 `report/index.html` 和 `report/summary.json`。
 
-## Eval Metadata
+## Eval 元数据
 
 ```json
 {
@@ -64,20 +53,18 @@ workspace.
 }
 ```
 
-## Test
+## 测试
 
 ```bash
 npm test
 npm run typecheck
 ```
 
-## Limitations
+## 局限性
 
-- The dashboard measures the provided eval suite; it cannot prove real-world
-  product impact without representative prompts.
-- Judge quality still depends on the configured judge model and assertions.
-- Cost metrics are token/latency deltas from provider responses, not billing
-  reconciliation.
+- 看板只衡量当前 eval suite；如果 prompt 不具备代表性，不能证明真实产品收益。
+- Judge 质量仍取决于配置的 judge 模型和断言设计。
+- 成本指标来自 provider 返回的 token/延迟差异，不等同于真实账单核算。
 
 ---
 
