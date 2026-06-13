@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-06-13T09:49:00.886Z",
+  "workspace": "/Volumes/DataSSD/Projects/projectsss/agent-skill-lift-dashboard/reports/agent-skill-lift/workspace/iteration-1",
+  "totals": {
+    "skills": 1,
+    "evals": 1,
+    "assertions": 2,
+    "passRate": 1,
+    "baselineEvals": 1,
+    "averagePassRateDelta": 1,
+    "regressionCount": 0,
+    "averageLatencyDeltaMs": 28,
+    "averageTokenDelta": 0,
+    "failedAssertions": 0
+  },
+  "riskGroups": {
+    "high": {
+      "count": 0,
+      "averagePassRate": 0,
+      "averageLift": 0,
+      "regressions": 0,
+      "failedAssertions": 0
+    },
+    "medium": {
+      "count": 1,
+      "averagePassRate": 1,
+      "averageLift": 1,
+      "regressions": 0,
+      "failedAssertions": 0
+    },
+    "low": {
+      "count": 0,
+      "averagePassRate": 0,
+      "averageLift": 0,
+      "regressions": 0,
+      "failedAssertions": 0
+    }
+  },
+  "tagGroups": {
+    "csv": {
+      "count": 1,
+      "averagePassRate": 1,
+      "averageLift": 1,
+      "regressions": 0,
+      "failedAssertions": 0
+    },
+    "revenue-analysis": {
+      "count": 1,
+      "averagePassRate": 1,
+      "averageLift": 1,
+      "regressions": 0,
+      "failedAssertions": 0
+    }
+  },
+  "bestCases": [
+    {
+      "skill": "basic-skill",
+      "evalSlug": "eval-top-revenue-month",
+      "evalName": "top revenue month",
+      "tags": [
+        "csv",
+        "revenue-analysis"
+      ],
+      "risk": "medium",
+      "withSkillPassRate": 1,
+      "withoutSkillPassRate": 0,
+      "passRateDelta": 1,
+      "latencyDeltaMs": 28,
+      "tokenDelta": 0,
+      "regression": false,
+      "failedAssertions": []
+    }
+  ],
+  "worstCases": [
+    {
+      "skill": "basic-skill",
+      "evalSlug": "eval-top-revenue-month",
+      "evalName": "top revenue month",
+      "tags": [
+        "csv",
+        "revenue-analysis"
+      ],
+      "risk": "medium",
+      "withSkillPassRate": 1,
+      "withoutSkillPassRate": 0,
+      "passRateDelta": 1,
+      "latencyDeltaMs": 28,
+      "tokenDelta": 0,
+      "regression": false,
+      "failedAssertions": []
+    }
+  ],
+  "cases": [
+    {
+      "skill": "basic-skill",
+      "evalSlug": "eval-top-revenue-month",
+      "evalName": "top revenue month",
+      "tags": [
+        "csv",
+        "revenue-analysis"
+      ],
+      "risk": "medium",
+      "withSkillPassRate": 1,
+      "withoutSkillPassRate": 0,
+      "passRateDelta": 1,
+      "latencyDeltaMs": 28,
+      "tokenDelta": 0,
+      "regression": false,
+      "failedAssertions": []
+    }
+  ]
+}

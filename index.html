@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Skill Lift Dashboard Demo</title>
+  <style>
+  :root {
+    --fg: #1a1f24;
+    --muted: #6a737d;
+    --bg: #ffffff;
+    --bg-alt: #f6f8fa;
+    --border: #e1e4e8;
+    --ok: #1a7f37;
+    --warn: #b08800;
+    --bad: #cf222e;
+    --ok-bg: #dafbe1;
+    --warn-bg: #fff8c5;
+    --bad-bg: #ffebe9;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  header.hero { background: linear-gradient(180deg, #fafbfc 0%, #f0f2f5 100%); border-bottom: 1px solid var(--border); padding: 24px 32px; }
+  header.hero h1 { margin: 0 0 4px; font-size: 22px; }
+  header.hero .meta { color: var(--muted); font-size: 13px; }
+  header.hero .totals { margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap; }
+  header.hero .stat { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; min-width: 120px; }
+  header.hero .stat .label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  header.hero .stat .value { display: block; font-size: 22px; font-weight: 600; margin-top: 2px; }
+  header.hero .stat.ok .value { color: var(--ok); }
+  header.hero .stat.bad .value { color: var(--bad); }
+  main { padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+  h2 { margin: 0 0 4px; font-size: 18px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  table.summary { width: 100%; border-collapse: collapse; margin-bottom: 32px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.summary th, table.summary td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  table.summary th { background: var(--bg-alt); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  table.summary td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.summary tr.skill-row.bad { background: var(--bad-bg); }
+  table.summary tr.skill-row.warn { background: var(--warn-bg); }
+  table.summary tr.skill-row.ok td { background: transparent; }
+  table.summary tr.skill-row a { color: var(--fg); text-decoration: none; font-weight: 500; }
+  table.summary tr.skill-row a:hover { text-decoration: underline; }
+  .bar { width: 100px; height: 10px; background: var(--bg-alt); border-radius: 5px; overflow: hidden; }
+  .bar .fill { height: 100%; }
+  .bar.ok .fill { background: var(--ok); }
+  .bar.warn .fill { background: var(--warn); }
+  .bar.bad .fill { background: var(--bad); }
+  article.skill { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  article.skill header h2 .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; vertical-align: middle; margin-left: 8px; }
+  article.skill header h2 .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  article.skill header h2 .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  article.skill header h2 .badge.bad { background: var(--bad-bg); color: var(--bad); }
+  article.skill .delta { margin-top: 8px; font-size: 13px; }
+  article.skill .delta.ok { color: var(--ok); }
+  article.skill .delta.bad { color: var(--bad); }
+  details.eval { border: 1px solid var(--border); border-radius: 6px; margin-top: 12px; }
+  details.eval > summary { padding: 10px 14px; cursor: pointer; display: flex; gap: 10px; align-items: center; }
+  details.eval[open] > summary { border-bottom: 1px solid var(--border); }
+  details.eval.bad > summary { background: var(--bad-bg); }
+  details.eval.ok > summary { background: var(--ok-bg); }
+  details.eval .eval-status { font-weight: 600; }
+  details.eval.bad .eval-status { color: var(--bad); }
+  details.eval.ok .eval-status { color: var(--ok); }
+  .eval-body { padding: 12px 16px; }
+  .run { padding: 12px 0; border-top: 1px dashed var(--border); }
+  .run:first-child { border-top: none; padding-top: 0; }
+  .run-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .mode { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .mode-with_skill { background: #ddf4ff; color: #0969da; }
+  .mode-without_skill { background: #fff1e5; color: #bc4c00; }
+  .status.ok { color: var(--ok); font-weight: 600; }
+  .status.bad { color: var(--bad); font-weight: 600; }
+  .run details > summary { cursor: pointer; font-size: 12px; color: var(--muted); padding: 4px 0; }
+  .run details[open] > summary { color: var(--fg); }
+  .run pre { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 12px; line-height: 1.45; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow-y: auto; }
+  table.assertions { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  table.assertions th, table.assertions td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  table.assertions th { background: var(--bg-alt); font-size: 11px; text-transform: uppercase; color: var(--muted); }
+  table.assertions tr.bad td { background: var(--bad-bg); }
+  table.assertions .check { color: var(--ok); font-weight: 600; }
+  table.assertions .x { color: var(--bad); font-weight: 600; }
+  table.assertions .evidence { color: var(--muted); font-size: 12px; }
+  details.tools { margin: 12px 0; }
+  details.tools > summary { cursor: pointer; font-size: 12px; color: var(--muted); padding: 4px 0; }
+  details.tools[open] > summary { color: var(--fg); font-weight: 500; }
+  table.tool-calls { width: 100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 13px; }
+  table.tool-calls th, table.tool-calls td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  table.tool-calls th { background: var(--bg-alt); font-size: 11px; text-transform: uppercase; color: var(--muted); }
+  table.tool-calls .tool-name { font-family: var(--mono); color: #b08800; font-weight: 600; }
+  pre.tool-args { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; margin: 0; font-family: var(--mono); font-size: 12px; line-height: 1.4; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow-y: auto; }
+  .product-dashboard { background: #f8fbff; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+  .product-dashboard h2 { margin-bottom: 2px; }
+  .product-dashboard h3 { margin: 20px 0 8px; font-size: 14px; }
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+  .product-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .product-card span { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .product-card strong { display: block; margin-top: 4px; font-size: 22px; }
+  .product-note { margin: 8px 0 12px; color: var(--muted); }
+  table.product-table { width: 100%; border-collapse: collapse; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table.product-table th, table.product-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  table.product-table th { background: var(--bg-alt); font-size: 11px; text-transform: uppercase; color: var(--muted); }
+  table.product-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .risk { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .risk-high { color: var(--bad); background: var(--bad-bg); }
+  .risk-medium { color: var(--warn); background: var(--warn-bg); }
+  .risk-low { color: var(--ok); background: var(--ok-bg); }
+  .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <h1>Agent Skill Lift Dashboard Demo</h1>
+    <div class="meta">
+      generated 2026-06-13T09:49:00.886Z
+      · target <code>mock-target</code>
+      · judge <code>mock-judge</code>
+    </div>
+    <div class="totals">
+      <div class="stat"><span class="label">skills</span><span class="value">1</span></div>
+      <div class="stat"><span class="label">evals</span><span class="value">1</span></div>
+      <div class="stat ok"><span class="label">passed</span><span class="value">2</span></div>
+      <div class="stat "><span class="label">failed</span><span class="value">0</span></div>
+      <div class="stat ok"><span class="label">pass rate</span><span class="value">100.0%</span></div>
+    </div>
+  </header>
+  <main>
+        
+    <section class="product-dashboard">
+      <h2>Product Lift Dashboard</h2>
+      <p class="muted">Measures whether each Agent Skill improves task outcomes versus the baseline run.</p>
+      <div class="product-grid">
+        <div class="product-card"><span>Skill pass rate</span><strong>100.0%</strong></div>
+        <div class="product-card"><span>Avg lift vs baseline</span><strong>+100.0pp</strong></div>
+        <div class="product-card"><span>Regressions</span><strong>0</strong></div>
+        <div class="product-card"><span>Latency delta</span><strong>+28.0ms</strong></div>
+        <div class="product-card"><span>Token delta</span><strong>0.0</strong></div>
+        <div class="product-card"><span>Failed assertions</span><strong>0</strong></div>
+      </div>
+      
+      <h3>Best Lift Cases</h3>
+      <table class="product-table">
+        <thead><tr><th>Skill</th><th>Eval</th><th>Risk</th><th>Tags</th><th>Lift</th><th>Latency</th><th>Failed</th></tr></thead>
+        <tbody>
+        <tr>
+          <td>basic-skill</td>
+          <td>top revenue month</td>
+          <td><span class="risk risk-medium">medium</span></td>
+          <td>csv, revenue-analysis</td>
+          <td class="ok">+100.0pp</td>
+          <td>+28.0ms</td>
+          <td>0</td>
+        </tr></tbody>
+      </table>
+      <h3>Worst Lift Cases</h3>
+      <table class="product-table">
+        <thead><tr><th>Skill</th><th>Eval</th><th>Risk</th><th>Tags</th><th>Lift</th><th>Latency</th><th>Failed</th></tr></thead>
+        <tbody>
+        <tr>
+          <td>basic-skill</td>
+          <td>top revenue month</td>
+          <td><span class="risk risk-medium">medium</span></td>
+          <td>csv, revenue-analysis</td>
+          <td class="ok">+100.0pp</td>
+          <td>+28.0ms</td>
+          <td>0</td>
+        </tr></tbody>
+      </table>
+      <h3>Tag Groups</h3>
+      <table class="product-table">
+        <thead><tr><th>Tag</th><th class="num">Cases</th><th class="num">Pass rate</th><th class="num">Lift</th><th class="num">Regressions</th><th class="num">Failed assertions</th></tr></thead>
+        <tbody>
+        <tr>
+          <td>csv</td>
+          <td class="num">1</td>
+          <td class="num">100.0%</td>
+          <td class="num">+100.0pp</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+        </tr>
+
+        <tr>
+          <td>revenue-analysis</td>
+          <td class="num">1</td>
+          <td class="num">100.0%</td>
+          <td class="num">+100.0pp</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+        </tr></tbody>
+      </table>
+    </section>
+  
+        <table class="summary">
+          <thead>
+            <tr>
+              <th>Skill</th>
+              <th class="num">Evals</th>
+              <th class="num">Passed</th>
+              <th class="num">Pass rate</th>
+              <th></th>
+              <th class="num">Avg time</th>
+              <th class="num">Avg tokens</th>
+            </tr>
+          </thead>
+          <tbody>
+    <tr class="skill-row ok">
+      <td><a href="#skill-basic-skill">basic-skill</a>
+          <div class="muted">basic-skill</div></td>
+      <td class="num">1</td>
+      <td class="num">2/2</td>
+      <td class="num">100.0%</td>
+      <td class="bar-cell"><div class="bar ok"><div class="fill" style="width:100%"></div></div></td>
+      <td class="num">30ms</td>
+      <td class="num">28</td>
+    </tr>
+  </tbody>
+        </table>
+        
+    <article class="skill" id="skill-basic-skill">
+      <header>
+        <h2>basic-skill <span class="badge ok">100.0%</span></h2>
+        <div class="muted">basic-skill</div>
+        <div class="muted">2/2 assertions · 1 evals · 30ms avg · 28 tokens avg</div>
+        <div class="delta ok">Δ vs baseline: pass-rate +100.00pp · time +0.03s · tokens +0.00</div>
+      </header>
+      <div class="evals">
+    <details class="eval bad">
+      <summary>
+        <span class="eval-status">✗</span>
+        <span class="eval-name">eval-top-revenue-month</span>
+        <span class="muted">2/4 assertions</span>
+      </summary>
+      <div class="eval-body">
+    <section class="run">
+      <header class="run-head">
+        <span class="mode mode-with_skill">with_skill</span>
+        <span class="status ok">PASS</span>
+        <span class="muted">30ms · 28 tokens · 2/2</span>
+      </header>
+      <details class="prompt"><summary>system prompt</summary><pre>&lt;skill name=&quot;basic-skill&quot;&gt;
+&lt;description&gt;Summarize small CSV files and identify the highest revenue month.&lt;/description&gt;
+&lt;instructions&gt;
+When given a CSV file with monthly revenue, identify the month with the highest revenue and explain the result concisely.
+
+Prefer a short answer with the winning month, the revenue value, and a one sentence rationale.
+&lt;/instructions&gt;
+&lt;/skill&gt;</pre></details>
+      <details class="prompt" open><summary>user prompt</summary><pre>Use the attached CSV to identify the month with the highest revenue.</pre></details>
+      <details class="output" open><summary>output</summary><pre>February has the highest revenue with 18.</pre></details>
+      
+      <table class="assertions"><thead><tr><th>#</th><th></th><th>Assertion</th><th>Evidence</th></tr></thead><tbody>
+        <tr class="ok">
+          <td class="num">1</td>
+          <td><span class='check'>✓</span></td>
+          <td>The output names February as the highest revenue month.</td>
+          <td><span class="evidence">Output names February.</span></td>
+        </tr>
+
+        <tr class="ok">
+          <td class="num">2</td>
+          <td><span class='check'>✓</span></td>
+          <td>The output includes the value 18.</td>
+          <td><span class="evidence">Output includes 18.</span></td>
+        </tr></tbody></table>
+      <details class="judge"><summary>judge prompt</summary><pre>You are grading an agentskills.io evaluation run.
+Grading principles:
+- Require concrete evidence for every PASS; quote or reference the output.
+- Do not give the benefit of the doubt.
+- PASS an assertion only if every condition in the assertion text holds.
+- A label without substance is a FAIL.
+- Tool calls (when present) are authoritative evidence of model behavior.
+Return STRICT JSON only. No markdown. Shape:
+{&quot;assertion_results&quot;:[{&quot;text&quot;:&quot;...&quot;,&quot;passed&quot;:true,&quot;evidence&quot;:&quot;...&quot;}],&quot;summary&quot;:{&quot;passed&quot;:0,&quot;failed&quot;:0,&quot;total&quot;:0,&quot;pass_rate&quot;:0}}
+Rules:
+- Include every assertion exactly once and copy the full assertion text verbatim into text.
+- Use short concrete evidence: quote, snippet, or file reference.
+- Summary may be included, but it will be recomputed by the caller.
+Assertions:
+[
+  &quot;The output names February as the highest revenue month.&quot;,
+  &quot;The output includes the value 18.&quot;
+]
+Model output:
+February has the highest revenue with 18.
+Output files:
+No output files were captured.</pre></details>
+    </section>
+  
+
+    <section class="run">
+      <header class="run-head">
+        <span class="mode mode-without_skill">without_skill</span>
+        <span class="status bad">FAIL</span>
+        <span class="muted">2ms · 28 tokens · 0/2</span>
+      </header>
+      
+      <details class="prompt" open><summary>user prompt</summary><pre>Use the attached CSV to identify the month with the highest revenue.</pre></details>
+      <details class="output" open><summary>output</summary><pre>January appears first with 12.</pre></details>
+      
+      <table class="assertions"><thead><tr><th>#</th><th></th><th>Assertion</th><th>Evidence</th></tr></thead><tbody>
+        <tr class="bad">
+          <td class="num">1</td>
+          <td><span class='x'>✗</span></td>
+          <td>The output names February as the highest revenue month.</td>
+          <td><span class="evidence">Output does not name February.</span></td>
+        </tr>
+
+        <tr class="bad">
+          <td class="num">2</td>
+          <td><span class='x'>✗</span></td>
+          <td>The output includes the value 18.</td>
+          <td><span class="evidence">Output does not include 18.</span></td>
+        </tr></tbody></table>
+      <details class="judge"><summary>judge prompt</summary><pre>You are grading an agentskills.io evaluation run.
+Grading principles:
+- Require concrete evidence for every PASS; quote or reference the output.
+- Do not give the benefit of the doubt.
+- PASS an assertion only if every condition in the assertion text holds.
+- A label without substance is a FAIL.
+- Tool calls (when present) are authoritative evidence of model behavior.
+Return STRICT JSON only. No markdown. Shape:
+{&quot;assertion_results&quot;:[{&quot;text&quot;:&quot;...&quot;,&quot;passed&quot;:true,&quot;evidence&quot;:&quot;...&quot;}],&quot;summary&quot;:{&quot;passed&quot;:0,&quot;failed&quot;:0,&quot;total&quot;:0,&quot;pass_rate&quot;:0}}
+Rules:
+- Include every assertion exactly once and copy the full assertion text verbatim into text.
+- Use short concrete evidence: quote, snippet, or file reference.
+- Summary may be included, but it will be recomputed by the caller.
+Assertions:
+[
+  &quot;The output names February as the highest revenue month.&quot;,
+  &quot;The output includes the value 18.&quot;
+]
+Model output:
+January appears first with 12.
+Output files:
+No output files were captured.</pre></details>
+    </section>
+  </div>
+    </details>
+  </div>
+    </article>
+  
+      </main>
+</body>
+</html>
